@@ -105,6 +105,12 @@ public class MyRefreshViewListView extends FrameLayout {
         if(contentView!=null)
             contentView.layout(0,0,contentView.getMeasuredWidth(),contentView.getMeasuredHeight());
     }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        return super.dispatchTouchEvent(ev);
+    }
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         switch (ev.getAction()) {
@@ -118,11 +124,11 @@ public class MyRefreshViewListView extends FrameLayout {
                 subY = (int) (ev.getY() - lasty);
                 if(subY<0 && !contentView.canScrollVertically(1)){//上拉加载判断
                     isTop = false;
-                    return true;
+                    return true;//拦截触摸事件
                 }
                 if(subY>0 && !contentView.canScrollVertically(-1)){//下拉刷新判断
                     isTop = true;
-                    return true;
+                    return true;//拦截触摸事件
                 }
                 break;
         }
@@ -132,6 +138,7 @@ public class MyRefreshViewListView extends FrameLayout {
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()){
             case MotionEvent.ACTION_MOVE:
+//                getParent().requestDisallowInterceptTouchEvent(true);
                 float mY = event.getY();
                 subY = (int) (mY - lasty);
                 if(isRefreshOrLoad){//正在刷新或者加载时候直接返回true
@@ -145,7 +152,9 @@ public class MyRefreshViewListView extends FrameLayout {
                             subY = getScrollY();
                             reset=true;
                         }else {
-                            return super.onTouchEvent(event);
+                            event.setAction(MotionEvent.ACTION_DOWN);
+                            reset=false;
+                            return dispatchTouchEvent(event);//分发到下一层控件
                         }
                     }
                 }else {
@@ -156,6 +165,11 @@ public class MyRefreshViewListView extends FrameLayout {
                             subY = getScrollY();
                             reset=true;
                         }else {
+                            if(getScrollY()>0){
+                                scrollBy(0, -getScrollY());
+                            }
+                            event.setAction(MotionEvent.ACTION_DOWN);
+                            dispatchTouchEvent(event);
                             return super.onTouchEvent(event);
                         }
                     }
